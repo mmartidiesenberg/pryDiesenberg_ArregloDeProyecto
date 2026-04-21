@@ -1,0 +1,46 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace pryDiesenberg_ArregloDeProyecto
+{
+    public partial class frmInicio : Form
+    {
+        public frmInicio()
+        {
+            InitializeComponent();
+        }
+        private void btnIniciar_Click(object sender, EventArgs e)
+        {          
+            frmInicioSesion principal = new frmInicioSesion();
+            principal.Show();
+            this.Hide();               
+        }
+
+        private void btnCerrar_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void btnMinimizar_Click(object sender, EventArgs e)
+        {
+            this.WindowState = FormWindowState.Minimized;
+        }
+
+        private void frmInicio_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Escape)
+            {
+                e.Handled = true;
+                Application.Exit();
+            }
+        }
+    }
+}
