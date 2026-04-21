@@ -23,7 +23,8 @@ namespace pryDiesenberg_ArregloDeProyecto
         {
             try
             {
-                conexionBD = new OleDbConnection(@"Provider = Microsoft.ACE.OLEDB.12.0;" + " Data Source = ..\\..\\Resources\\EL_CLUB.accdb");
+                conexionBD = new OleDbConnection(
+@"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=|DataDirectory|\EL_CLUB.accdb");
                 conexionBD.Open();
             }
             catch (Exception EX)
@@ -71,10 +72,15 @@ namespace pryDiesenberg_ArregloDeProyecto
             comandoBD.CommandType = System.Data.CommandType.TableDirect;
             comandoBD.CommandText = "USUARIOS";
 
+            if (conexionBD.State == ConnectionState.Open)
+            {
+                conexionBD.Close();
+            }
             conexionBD.Open();
 
             lectorBD = comandoBD.ExecuteReader();
 
+            varEncontro = 0;
             // Mientras haya registros
             if (lectorBD.HasRows)
             {
