@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.OleDb;
+using System.IO;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
-
-using System.Data.OleDb;
-using System.Reflection.Emit;
 using System.Windows.Forms;
-using System.Data;
 
 
 namespace pryDiesenberg_ArregloDeProyecto
@@ -27,21 +27,31 @@ namespace pryDiesenberg_ArregloDeProyecto
         public string datosTabla;
         public void ConectarBD()
         {
-            try 
+            try
             {
-                conexionBD = new OleDbConnection();
-                conexionBD.ConnectionString = cadenaConexion;
+                string rutaBase = Path.Combine(
+                    Application.StartupPath,
+                    "EL_CLUB.accdb"
+                );
+
+                MessageBox.Show("Ruta: " + rutaBase); // ← línea temporal para ver la ruta
+
+                conexionBD = new OleDbConnection(
+                    $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={rutaBase};"
+                );
                 conexionBD.Open();
-                estadoConexion = "Conectado";
+
+                MessageBox.Show("Conexión exitosa!"); // ← para confirmar que abrió
             }
             catch (Exception ex)
             {
-                estadoConexion = "Error" + ex.Message;
+                MessageBox.Show("ERROR: " + ex.Message);
             }
         }
 
         public void TraerDatos(DataGridView grilla)
         {
+            ConectarBD();
             //instancia un objeto en la memoria
             comandoBD = new OleDbCommand();
 
@@ -70,6 +80,9 @@ namespace pryDiesenberg_ArregloDeProyecto
                     grilla.Rows.Add(lectorBD[0],lectorBD[1],lectorBD[2],lectorBD[4], lectorBD[5], lectorBD[6], lectorBD[7], actividad);
                 }
             }
+            lectorBD.Close();
+            conexionBD.Close();
+            conexionBD.Dispose();
         }
 
         public void BuscarPorID(int codigo)

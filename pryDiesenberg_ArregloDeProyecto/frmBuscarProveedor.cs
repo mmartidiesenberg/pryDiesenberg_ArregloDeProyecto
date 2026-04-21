@@ -10,9 +10,10 @@ namespace pryDiesenberg_ArregloDeProyecto
         public frmBuscarProveedor()
         {
             InitializeComponent();
-
             treDirectorios.Nodes.Clear();
-            //DirectoryInfo rutaBase = new DirectoryInfo(@"../../Resources/Proveedores/");            
+            DirectoryInfo rutaBase = new DirectoryInfo(
+                Path.Combine(Application.StartupPath, "Resources", "Proveedores")
+            );
             treDirectorios.Nodes.Add(crearArbol(rutaBase));
         }
 
