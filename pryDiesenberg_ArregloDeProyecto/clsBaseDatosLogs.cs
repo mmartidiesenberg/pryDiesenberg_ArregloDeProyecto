@@ -32,8 +32,7 @@ namespace pryDiesenberg_ArregloDeProyecto
             {
                 string rutaBase = Path.Combine(
                     Application.StartupPath,
-                    "Resources",
-                    "EL_CLUB.accdb"
+                    "EL_CLUB.accdb"  // Sin carpeta Resources
                 );
 
                 conexionBD = new OleDbConnection(
