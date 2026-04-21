@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.OleDb;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-using System.Data.OleDb;
 using System.Windows.Forms;
-using System.Data;
 
 namespace pryDiesenberg_ArregloDeProyecto
 {
@@ -30,7 +30,15 @@ namespace pryDiesenberg_ArregloDeProyecto
         {
             try
             {
-                conexionBD = new OleDbConnection(@"Provider = Microsoft.ACE.OLEDB.12.0;" + " Data Source = ..\\..\\Resources\\EL_CLUB.accdb");
+                string rutaBase = Path.Combine(
+                    Application.StartupPath,
+                    "Resources",
+                    "EL_CLUB.accdb"
+                );
+
+                conexionBD = new OleDbConnection(
+                    $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={rutaBase};"
+                );
                 conexionBD.Open();
             }
             catch (Exception ex)
