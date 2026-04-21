@@ -55,5 +55,12 @@ namespace pryDiesenberg_ArregloDeProyecto
             lstCategoria.Items.Clear();
             MessageBox.Show("Usuario Registrado con Exito");
         }
+
+        
+
+        private void frmUsuarios_Load_1(object sender, EventArgs e)
+        {
+
+        }
     }
 }

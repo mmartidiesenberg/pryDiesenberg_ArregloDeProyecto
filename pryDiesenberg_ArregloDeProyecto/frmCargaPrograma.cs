@@ -49,5 +49,12 @@ namespace pryDiesenberg_ArregloDeProyecto
                 Application.Exit();
             }
         }
+
+        
+
+        private void frmCargaPrograma_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

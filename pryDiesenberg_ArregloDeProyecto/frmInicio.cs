@@ -42,5 +42,11 @@ namespace pryDiesenberg_ArregloDeProyecto
                 Application.Exit();
             }
         }
+
+
+        private void frmInicio_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

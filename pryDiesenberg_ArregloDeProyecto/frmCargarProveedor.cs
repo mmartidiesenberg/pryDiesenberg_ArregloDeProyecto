@@ -73,5 +73,12 @@ namespace pryDiesenberg_ArregloDeProyecto
                 Application.Exit();
             }
         }
+
+       
+
+        private void frmCargarProveedor_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

@@ -75,5 +75,12 @@ namespace pryDiesenberg_ArregloDeProyecto
 
             objBaseDatosCliente.TraerDatos(dgvCliente);
         }
+
+        
+
+        private void frmClientes_Load_1(object sender, EventArgs e)
+        {
+
+        }
     }
 }
