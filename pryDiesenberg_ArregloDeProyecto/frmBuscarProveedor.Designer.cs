@@ -400,10 +400,10 @@ namespace pryDiesenberg_ArregloDeProyecto
             // 
             this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
             this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
-            this.imageList1.Images.SetKeyName(0, "archivo.png");
-            this.imageList1.Images.SetKeyName(1, "carpeta.png");
-            this.imageList1.Images.SetKeyName(2, "carpeta-removebg-preview.png");
-            this.imageList1.Images.SetKeyName(3, "archivo-removebg-preview.png");
+            //this.imageList1.Images.SetKeyName(0, "archivo.png");
+            //this.imageList1.Images.SetKeyName(1, "carpeta.png");
+            //this.imageList1.Images.SetKeyName(2, "carpeta-removebg-preview.png");
+            //this.imageList1.Images.SetKeyName(3, "archivo-removebg-preview.png");
             // 
             // frmBuscarProveedor
             // 
