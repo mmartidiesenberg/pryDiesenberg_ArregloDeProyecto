@@ -162,7 +162,6 @@ namespace pryDiesenberg_ArregloDeProyecto
             this.btnNuevoProveedor.Text = "Nuevo Proveedor";
             this.btnNuevoProveedor.UseVisualStyleBackColor = false;
             this.btnNuevoProveedor.Visible = false;
-            this.btnNuevoProveedor.Click += new System.EventHandler(this.btnNuevoProveedor_Click);
             // 
             // btnMostrarProveedor
             // 
@@ -394,7 +393,6 @@ namespace pryDiesenberg_ArregloDeProyecto
             this.btnCargarProveedor.Tag = "";
             this.btnCargarProveedor.Text = "Nuevo Proveedor";
             this.btnCargarProveedor.UseVisualStyleBackColor = true;
-            this.btnCargarProveedor.Click += new System.EventHandler(this.btnNuevoProveedor_Click);
             // 
             // imageList1
             // 
@@ -418,7 +416,6 @@ namespace pryDiesenberg_ArregloDeProyecto
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "frmBuscarProveedor";
             this.Load += new System.EventHandler(this.frmBuscarProveedor_Load);
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.frmBuscarProveedor_KeyDown);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
