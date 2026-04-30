@@ -40,7 +40,10 @@ namespace pryDiesenberg_ArregloDeProyecto
 
         private TreeNode crearArbol(DirectoryInfo rutaBase)
         {
-            TreeNode newNode = new TreeNode(rutaBase.Name);
+            TreeNode newNode = new TreeNode(rutaBase.Name)
+            {
+                Tag = rutaBase.FullName
+            };
 
             try
             {
@@ -51,7 +54,11 @@ namespace pryDiesenberg_ArregloDeProyecto
 
                 foreach (var file in rutaBase.GetFiles())
                 {
-                    newNode.Nodes.Add(new TreeNode(file.Name));
+                    TreeNode fileNode = new TreeNode(file.Name)
+                    {
+                        Tag = file.FullName
+                    };
+                    newNode.Nodes.Add(fileNode);
                 }
             }
             catch (UnauthorizedAccessException)
@@ -75,11 +82,22 @@ namespace pryDiesenberg_ArregloDeProyecto
                     return;
                 }
 
-                string rutaArchivo = Path.Combine(rutaProveedores, treDirectorios.SelectedNode.FullPath);
+                string rutaArchivo = treDirectorios.SelectedNode.Tag as string;
+                if (string.IsNullOrEmpty(rutaArchivo))
+                {
+                    MessageBox.Show("Selecciona un archivo válido (.csv).");
+                    return;
+                }
 
                 if (!File.Exists(rutaArchivo))
                 {
                     MessageBox.Show($"El archivo no existe: {rutaArchivo}");
+                    return;
+                }
+
+                if (Path.GetExtension(rutaArchivo).ToLower() != ".csv")
+                {
+                    MessageBox.Show("Selecciona un archivo con extensión .csv");
                     return;
                 }
 
@@ -128,10 +146,13 @@ namespace pryDiesenberg_ArregloDeProyecto
 
         private void btnModificarProveedor_Click(object sender, EventArgs e)
         {
-            string archivoSeleccionado = treDirectorios.SelectedNode.FullPath;
+            if (treDirectorios.SelectedNode == null)
+            {
+                MessageBox.Show("Selecciona el archivo a modificar");
+                return;
+            }
 
-            StreamWriter swModificar = new StreamWriter(archivoSeleccionado, true);
-
+            // Actualizo valores en la grilla y guardo (la función GuardarCambiosEnCSV usará el Tag del nodo)
             dgrArchivos[0, posicion].Value = txtNumero.Text;
             dgrArchivos[1, posicion].Value = txtEntidad.Text;
             dgrArchivos[2, posicion].Value = txtApertura.Text;
@@ -163,7 +184,12 @@ namespace pryDiesenberg_ArregloDeProyecto
         {
             try
             {
-                string archivoSeleccionado = Path.Combine(rutaProveedores, treDirectorios.SelectedNode.FullPath);
+                string archivoSeleccionado = treDirectorios.SelectedNode.Tag as string;
+                if (string.IsNullOrEmpty(archivoSeleccionado))
+                {
+                    MessageBox.Show("No se encontró la ruta del archivo seleccionado.");
+                    return;
+                }
 
                 using (StreamWriter swGuardar = new StreamWriter(archivoSeleccionado, false))
                 {
@@ -199,6 +225,8 @@ namespace pryDiesenberg_ArregloDeProyecto
         int posicion;
         private void dgrArchivos_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
+            if (dgrArchivos.CurrentRow == null) return;
+
             posicion = dgrArchivos.CurrentRow.Index;
 
             txtNumero.Text = dgrArchivos[0, posicion].Value?.ToString() ?? "";
@@ -224,6 +252,7 @@ namespace pryDiesenberg_ArregloDeProyecto
             dgrArchivos.ClearSelection();
         }
 
+        // ... (resto de validaciones KeyPress sin cambios)
         private void txtNumero_KeyPress(object sender, KeyPressEventArgs e)
         {
             if ((e.KeyChar >= 32 && e.KeyChar <= 47) || (e.KeyChar >= 58 && e.KeyChar <= 255))
@@ -355,4 +384,5 @@ namespace pryDiesenberg_ArregloDeProyecto
         }
     }
 }
+
 

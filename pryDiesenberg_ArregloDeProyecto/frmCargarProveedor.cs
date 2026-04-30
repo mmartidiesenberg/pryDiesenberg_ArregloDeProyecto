@@ -17,52 +17,65 @@ namespace pryDiesenberg_ArregloDeProyecto
         {
             InitializeComponent();
             btnGuardar.Enabled = false;
-            DirectoryInfo rutaBase = new DirectoryInfo(@"../../Resources/Proveedores");
-            fbdSeleccionCarpeta.SelectedPath = Application.StartupPath + rutaBase;
+
+            string defaultPath = Path.Combine(Application.StartupPath, "Resources", "Proveedores");
+            if (!Directory.Exists(defaultPath))
+            {
+                Directory.CreateDirectory(defaultPath);
+            }
+
+            fbdSeleccionCarpeta.SelectedPath = defaultPath;
         }
 
         private void btnSeleccionCarpeta_Click(object sender, EventArgs e)
         {
-            //SELECCIONO RUTA DE LA CARPETA
-            fbdSeleccionCarpeta.ShowDialog();
-            lblDireccion.Text = fbdSeleccionCarpeta.SelectedPath;
-
-            if (btnSeleccionCarpeta.DialogResult == DialogResult.OK || btnSeleccionCarpeta.Enabled == true)
+            // Mostrar diálogo y usar su resultado
+            DialogResult result = fbdSeleccionCarpeta.ShowDialog();
+            if (result == DialogResult.OK && !string.IsNullOrEmpty(fbdSeleccionCarpeta.SelectedPath))
             {
+                lblDireccion.Text = fbdSeleccionCarpeta.SelectedPath;
                 btnGuardar.Enabled = true;
             }
         }
 
         private void btnGuardar_Click(object sender, EventArgs e)
         {
-            //  CREO VARIABLE CON LA RUTA SELECCIONADA Y CREO VARIABLE NOMBRE DE ARCHIVO .CSV
-            string ruta = fbdSeleccionCarpeta.SelectedPath;
-            string nombreArchivo = txtNombreArchivo.Text + ".csv";
+            if (string.IsNullOrWhiteSpace(txtNombreArchivo.Text))
+            {
+                MessageBox.Show("Ingresa un nombre de archivo válido.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-            //  CONCATENO LA RUTA MAS UNA BARRA PARA ENTRAR A LA CARPETA SELECCIONADA Y EL NOMBRE DEL ARCHIVO
-            ruta += @"\" + nombreArchivo;         
+            // Ruta seleccionada y nombre de archivo
+            string carpeta = fbdSeleccionCarpeta.SelectedPath;
+            string nombreArchivo = txtNombreArchivo.Text.Trim() + ".csv";
 
-            //  ABRO EL ARCHIVO 
-            StreamWriter ManejoArchivo = new StreamWriter(ruta, false);
-           
-            //  LLAMO LOS CAMPOS ANTERIORMENTE CREADOS(se separan con ";")
-            ManejoArchivo.Write("N° ;");
-            ManejoArchivo.Write("Entidad ;");
-            ManejoArchivo.Write("APERTURA ;");
-            ManejoArchivo.Write("N° EXPTE. ;");
-            ManejoArchivo.Write("JUZG. ;");
-            ManejoArchivo.Write("JURISD. ;");
-            ManejoArchivo.Write("DIRECCION ;");
-            ManejoArchivo.WriteLine("LIQUIDADOR RESPONSABLE");
+            string rutaCompleta = Path.Combine(carpeta, nombreArchivo);
 
-            //  CIERRO EL ARCHIVO
-            ManejoArchivo.Close();
-            ManejoArchivo.Dispose();
+            try
+            {
+                // Crear/reescribir el archivo con encabezados
+                using (StreamWriter ManejoArchivo = new StreamWriter(rutaCompleta, false, Encoding.UTF8))
+                {
+                    ManejoArchivo.Write("N°;");
+                    ManejoArchivo.Write("Entidad;");
+                    ManejoArchivo.Write("APERTURA;");
+                    ManejoArchivo.Write("N° EXPTE.;");
+                    ManejoArchivo.Write("JUZG.;");
+                    ManejoArchivo.Write("JURISD.;");
+                    ManejoArchivo.Write("DIRECCION;");
+                    ManejoArchivo.WriteLine("LIQUIDADOR RESPONSABLE");
+                }
 
-            // MENSAJE
-            MessageBox.Show("Archivo Creado");
-            lblDireccion.Text = "";
-            txtNombreArchivo.Clear();
+                MessageBox.Show("Archivo creado en:\n" + rutaCompleta, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                lblDireccion.Text = "";
+                txtNombreArchivo.Clear();
+                btnGuardar.Enabled = false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al crear el archivo: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void frmCargarProveedor_KeyDown(object sender, KeyEventArgs e)
@@ -73,8 +86,6 @@ namespace pryDiesenberg_ArregloDeProyecto
                 Application.Exit();
             }
         }
-
-       
 
         private void frmCargarProveedor_Load(object sender, EventArgs e)
         {
