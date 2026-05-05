@@ -7,25 +7,33 @@ namespace pryDiesenberg_ArregloDeProyecto
     public partial class frmBuscarProveedor : Form
     {
         private string rutaProveedores;
+        int posicion;
 
         public frmBuscarProveedor()
         {
             InitializeComponent();
+
+            // Eventos enlazados UNA sola vez
+            btnMostrarProveedor.Click += btnMostrarProveedor_Click;
+            btnNuevoProveedor.Click += btnNuevoProveedor_Click;
+            btnModificarProveedor.Click += btnModificarProveedor_Click;
+            btnEliminarProveedor.Click += btnEliminarProveedor_Click;
+            btnLimpiar.Click += btnLimpiar_Click;
+
+            dgrArchivos.CellClick += dgrArchivos_CellContentClick;
+            dgrArchivos.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgrArchivos.MultiSelect = false;
+
             treDirectorios.Nodes.Clear();
 
-            // Construir la ruta correcta
             rutaProveedores = Path.Combine(Application.StartupPath, "Resources", "Proveedores");
 
-            // Validar que la carpeta existe
             if (!Directory.Exists(rutaProveedores))
             {
                 MessageBox.Show(
                     $"La carpeta no existe: {rutaProveedores}\n\n" +
-                    $"Por favor, crea la carpeta 'Resources/Proveedores' en: {Application.StartupPath}",
-                    "Error de ruta",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error
-                );
+                    $"Crea la carpeta 'Resources/Proveedores' en: {Application.StartupPath}",
+                    "Error de ruta", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -38,103 +46,84 @@ namespace pryDiesenberg_ArregloDeProyecto
             pnlCargarProveedor.Visible = false;
         }
 
+        // ──────────────────────────────────────────────
+        // ÁRBOL DE DIRECTORIOS
+        // ──────────────────────────────────────────────
         private TreeNode crearArbol(DirectoryInfo rutaBase)
         {
-            TreeNode newNode = new TreeNode(rutaBase.Name)
-            {
-                Tag = rutaBase.FullName
-            };
+            TreeNode newNode = new TreeNode(rutaBase.Name) { Tag = rutaBase.FullName };
 
             try
             {
                 foreach (var dir in rutaBase.GetDirectories())
-                {
                     newNode.Nodes.Add(crearArbol(dir));
-                }
 
                 foreach (var file in rutaBase.GetFiles())
-                {
-                    TreeNode fileNode = new TreeNode(file.Name)
-                    {
-                        Tag = file.FullName
-                    };
-                    newNode.Nodes.Add(fileNode);
-                }
+                    newNode.Nodes.Add(new TreeNode(file.Name) { Tag = file.FullName });
             }
             catch (UnauthorizedAccessException)
             {
-                MessageBox.Show($"No tienes permisos para acceder a: {rutaBase.FullName}");
+                MessageBox.Show($"Sin permisos para acceder a: {rutaBase.FullName}");
             }
 
             return newNode;
         }
 
+        // ──────────────────────────────────────────────
+        // BOTÓN MOSTRAR
+        // ──────────────────────────────────────────────
         private void btnMostrarProveedor_Click(object sender, EventArgs e)
         {
-            limpiar();
-            string leerLinea;
-            string[] separarDatos;
+            if (treDirectorios.SelectedNode == null)
+            {
+                MessageBox.Show("Seleccioná un archivo para cargar la grilla.");
+                return;
+            }
+
+            string rutaArchivo = treDirectorios.SelectedNode.Tag as string;
+
+            if (string.IsNullOrEmpty(rutaArchivo) || !File.Exists(rutaArchivo))
+            {
+                MessageBox.Show("Seleccioná un archivo válido.");
+                return;
+            }
+
+            if (Path.GetExtension(rutaArchivo).ToLower() != ".csv")
+            {
+                MessageBox.Show("Seleccioná un archivo con extensión .csv");
+                return;
+            }
+
             try
             {
-                if (treDirectorios.SelectedNode == null)
-                {
-                    MessageBox.Show("Selecciona un archivo para cargar la grilla");
-                    return;
-                }
-
-                string rutaArchivo = treDirectorios.SelectedNode.Tag as string;
-                if (string.IsNullOrEmpty(rutaArchivo))
-                {
-                    MessageBox.Show("Selecciona un archivo válido (.csv).");
-                    return;
-                }
-
-                if (!File.Exists(rutaArchivo))
-                {
-                    MessageBox.Show($"El archivo no existe: {rutaArchivo}");
-                    return;
-                }
-
-                if (Path.GetExtension(rutaArchivo).ToLower() != ".csv")
-                {
-                    MessageBox.Show("Selecciona un archivo con extensión .csv");
-                    return;
-                }
-
-                btnNuevoProveedor.Visible = true;
-                btnModificarProveedor.Visible = true;
-                btnEliminarProveedor.Visible = true;
-                btnLimpiar.Visible = true;
-                pnlCargarProveedor.Visible = true;
                 dgrArchivos.Rows.Clear();
                 dgrArchivos.Columns.Clear();
 
                 using (StreamReader sr = new StreamReader(rutaArchivo, true))
                 {
-                    leerLinea = sr.ReadLine();
-                    if (string.IsNullOrEmpty(leerLinea))
+                    string encabezado = sr.ReadLine();
+                    if (string.IsNullOrEmpty(encabezado))
                     {
-                        MessageBox.Show("El archivo está vacío");
+                        MessageBox.Show("El archivo está vacío.");
                         return;
                     }
 
-                    separarDatos = leerLinea.Split(';');
-
-                    for (int i = 0; i < separarDatos.Length; i++)
-                    {
-                        dgrArchivos.Columns.Add(separarDatos[i], separarDatos[i]);
-                    }
+                    foreach (string col in encabezado.Split(';'))
+                        dgrArchivos.Columns.Add(col, col);
 
                     while (!sr.EndOfStream)
                     {
-                        leerLinea = sr.ReadLine();
-                        if (!string.IsNullOrEmpty(leerLinea))
-                        {
-                            separarDatos = leerLinea.Split(';');
-                            dgrArchivos.Rows.Add(separarDatos);
-                        }
+                        string linea = sr.ReadLine();
+                        if (!string.IsNullOrEmpty(linea))
+                            dgrArchivos.Rows.Add(linea.Split(';'));
                     }
                 }
+
+                pnlCargarProveedor.Visible = true;
+                btnNuevoProveedor.Visible = true;
+                btnModificarProveedor.Visible = true;
+                btnEliminarProveedor.Visible = true;
+                btnLimpiar.Visible = true;
 
                 limpiar();
             }
@@ -144,15 +133,53 @@ namespace pryDiesenberg_ArregloDeProyecto
             }
         }
 
-        private void btnModificarProveedor_Click(object sender, EventArgs e)
+        // ──────────────────────────────────────────────
+        // BOTÓN NUEVO
+        // ──────────────────────────────────────────────
+        private void btnNuevoProveedor_Click(object sender, EventArgs e)
         {
-            if (treDirectorios.SelectedNode == null)
+            if (dgrArchivos.Columns.Count == 0)
             {
-                MessageBox.Show("Selecciona el archivo a modificar");
+                MessageBox.Show("Primero cargá un archivo con 'Mostrar Proveedor'.");
                 return;
             }
 
-            // Actualizo valores en la grilla y guardo (la función GuardarCambiosEnCSV usará el Tag del nodo)
+            if (string.IsNullOrWhiteSpace(txtNumero.Text))
+            {
+                MessageBox.Show("Completá al menos el campo N° antes de agregar.");
+                txtNumero.Focus();
+                return;
+            }
+
+            dgrArchivos.Rows.Add(
+                txtNumero.Text, txtEntidad.Text, txtApertura.Text,
+                txtNumExpediente.Text, txtJuzg.Text, txtJurisd.Text,
+                txtDireccion.Text, txtLiquidador.Text);
+
+            limpiar();
+            txtNumero.Focus();
+            GuardarCambiosEnCSV();
+        }
+
+        // ──────────────────────────────────────────────
+        // BOTÓN MODIFICAR
+        // ──────────────────────────────────────────────
+        private void btnModificarProveedor_Click(object sender, EventArgs e)
+        {
+            if (dgrArchivos.CurrentRow == null || dgrArchivos.CurrentRow.IsNewRow)
+            {
+                MessageBox.Show("Seleccioná una fila de la grilla para modificar.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtNumero.Text))
+            {
+                MessageBox.Show("El campo N° no puede estar vacío.");
+                txtNumero.Focus();
+                return;
+            }
+
+            // Actualiza la fila en la grilla con lo que hay en los campos
             dgrArchivos[0, posicion].Value = txtNumero.Text;
             dgrArchivos[1, posicion].Value = txtEntidad.Text;
             dgrArchivos[2, posicion].Value = txtApertura.Text;
@@ -162,57 +189,88 @@ namespace pryDiesenberg_ArregloDeProyecto
             dgrArchivos[6, posicion].Value = txtDireccion.Text;
             dgrArchivos[7, posicion].Value = txtLiquidador.Text;
 
-            limpiar();
-            txtNumero.Focus();
             GuardarCambiosEnCSV();
+
+            MessageBox.Show("Proveedor modificado correctamente.", "Éxito",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            limpiar(); // Limpia DESPUÉS de guardar
+            txtNumero.Focus();
         }
 
+        // ──────────────────────────────────────────────
+        // BOTÓN ELIMINAR
+        // ──────────────────────────────────────────────
         private void btnEliminarProveedor_Click(object sender, EventArgs e)
         {
-            dgrArchivos.Rows.RemoveAt(posicion);
-            limpiar();
-            txtNumero.Focus();
-            GuardarCambiosEnCSV();
+            if (dgrArchivos.CurrentRow == null)
+            {
+                MessageBox.Show("Seleccioná una fila para eliminar.");
+                return;
+            }
+
+            // Evita eliminar la fila vacía de nueva entrada
+            if (dgrArchivos.CurrentRow.IsNewRow)
+            {
+                MessageBox.Show("No hay proveedor seleccionado para eliminar.");
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                "¿Seguro que querés eliminar este proveedor?",
+                "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (confirm == DialogResult.Yes)
+            {
+                dgrArchivos.Rows.RemoveAt(posicion);
+                limpiar();
+                txtNumero.Focus();
+                GuardarCambiosEnCSV();
+            }
         }
 
+        // ──────────────────────────────────────────────
+        // BOTÓN LIMPIAR
+        // ──────────────────────────────────────────────
         private void btnLimpiar_Click(object sender, EventArgs e)
         {
             limpiar();
         }
 
+        // ──────────────────────────────────────────────
+        // GUARDAR CSV
+        // ──────────────────────────────────────────────
         private void GuardarCambiosEnCSV()
         {
             try
             {
-                string archivoSeleccionado = treDirectorios.SelectedNode.Tag as string;
+                string archivoSeleccionado = treDirectorios.SelectedNode?.Tag as string;
                 if (string.IsNullOrEmpty(archivoSeleccionado))
                 {
                     MessageBox.Show("No se encontró la ruta del archivo seleccionado.");
                     return;
                 }
 
-                using (StreamWriter swGuardar = new StreamWriter(archivoSeleccionado, false))
+                using (StreamWriter sw = new StreamWriter(archivoSeleccionado, false))
                 {
+                    // Encabezados
                     for (int i = 0; i < dgrArchivos.Columns.Count; i++)
                     {
-                        swGuardar.Write(dgrArchivos.Columns[i].HeaderText);
-                        if (i < dgrArchivos.Columns.Count - 1)
-                            swGuardar.Write(";");
+                        sw.Write(dgrArchivos.Columns[i].HeaderText);
+                        if (i < dgrArchivos.Columns.Count - 1) sw.Write(";");
                     }
-                    swGuardar.WriteLine();
+                    sw.WriteLine();
 
+                    // Filas
                     foreach (DataGridViewRow row in dgrArchivos.Rows)
                     {
-                        if (!row.IsNewRow)
+                        if (row.IsNewRow) continue;
+                        for (int i = 0; i < dgrArchivos.Columns.Count; i++)
                         {
-                            for (int i = 0; i < dgrArchivos.Columns.Count; i++)
-                            {
-                                swGuardar.Write(row.Cells[i].Value);
-                                if (i < dgrArchivos.Columns.Count - 1)
-                                    swGuardar.Write(";");
-                            }
-                            swGuardar.WriteLine();
+                            sw.Write(row.Cells[i].Value ?? "");
+                            if (i < dgrArchivos.Columns.Count - 1) sw.Write(";");
                         }
+                        sw.WriteLine();
                     }
                 }
             }
@@ -222,7 +280,9 @@ namespace pryDiesenberg_ArregloDeProyecto
             }
         }
 
-        int posicion;
+        // ──────────────────────────────────────────────
+        // CLICK EN GRILLA
+        // ──────────────────────────────────────────────
         private void dgrArchivos_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (dgrArchivos.CurrentRow == null) return;
@@ -239,6 +299,9 @@ namespace pryDiesenberg_ArregloDeProyecto
             txtLiquidador.Text = dgrArchivos[7, posicion].Value?.ToString() ?? "";
         }
 
+        // ──────────────────────────────────────────────
+        // LIMPIAR CAMPOS
+        // ──────────────────────────────────────────────
         void limpiar()
         {
             txtNumero.Clear();
@@ -252,135 +315,65 @@ namespace pryDiesenberg_ArregloDeProyecto
             dgrArchivos.ClearSelection();
         }
 
-        // ... (resto de validaciones KeyPress sin cambios)
+        // ──────────────────────────────────────────────
+        // VALIDACIONES KeyPress (sin cambios)
+        // ──────────────────────────────────────────────
         private void txtNumero_KeyPress(object sender, KeyPressEventArgs e)
         {
             if ((e.KeyChar >= 32 && e.KeyChar <= 47) || (e.KeyChar >= 58 && e.KeyChar <= 255))
-            {
-                MessageBox.Show("Solo Numeros", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                e.Handled = true;
-                return;
-            }
-
-            if (e.KeyChar == (char)Keys.Return)
-            {
-                txtEntidad.Focus();
-                e.Handled = true;
-            }
+            { MessageBox.Show("Solo Números", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation); e.Handled = true; return; }
+            if (e.KeyChar == (char)Keys.Return) { txtEntidad.Focus(); e.Handled = true; }
         }
 
         private void txtEntidad_KeyPress(object sender, KeyPressEventArgs e)
         {
             if ((e.KeyChar >= 32 && e.KeyChar <= 64) || (e.KeyChar >= 91 && e.KeyChar <= 96) || (e.KeyChar >= 123 && e.KeyChar <= 255))
-            {
-                MessageBox.Show("Solo Letras", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                e.Handled = true;
-                return;
-            }
-
-            if (e.KeyChar == (char)Keys.Return)
-            {
-                txtApertura.Focus();
-                e.Handled = true;
-            }
+            { MessageBox.Show("Solo Letras", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation); e.Handled = true; return; }
+            if (e.KeyChar == (char)Keys.Return) { txtApertura.Focus(); e.Handled = true; }
         }
 
         private void txtApertura_KeyPress(object sender, KeyPressEventArgs e)
         {
             if ((e.KeyChar >= 32 && e.KeyChar <= 46) || (e.KeyChar >= 58 && e.KeyChar <= 255))
-            {
-                MessageBox.Show("Solo Numeros y /", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                e.Handled = true;
-                return;
-            }
-
-            if (e.KeyChar == (char)Keys.Return)
-            {
-                txtNumExpediente.Focus();
-                e.Handled = true;
-            }
+            { MessageBox.Show("Solo Números y /", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation); e.Handled = true; return; }
+            if (e.KeyChar == (char)Keys.Return) { txtNumExpediente.Focus(); e.Handled = true; }
         }
 
         private void txtNumExpediente_KeyPress(object sender, KeyPressEventArgs e)
         {
             if ((e.KeyChar >= 32 && e.KeyChar <= 46) || (e.KeyChar >= 58 && e.KeyChar <= 255))
-            {
-                MessageBox.Show("Solo Numeros y /", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                e.Handled = true;
-                return;
-            }
-
-            if (e.KeyChar == (char)Keys.Return)
-            {
-                txtJuzg.Focus();
-                e.Handled = true;
-            }
+            { MessageBox.Show("Solo Números y /", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation); e.Handled = true; return; }
+            if (e.KeyChar == (char)Keys.Return) { txtJuzg.Focus(); e.Handled = true; }
         }
 
         private void txtJuzg_KeyPress(object sender, KeyPressEventArgs e)
         {
             if ((e.KeyChar >= 32 && e.KeyChar <= 47) || (e.KeyChar >= 58 && e.KeyChar <= 64) ||
-                (e.KeyChar >= 91 && e.KeyChar <= 96) || (e.KeyChar >= 123 && e.KeyChar <= 247) ||
-                (e.KeyChar >= 249 && e.KeyChar <= 255))
-            {
-                MessageBox.Show("Solo Letras y Numeros", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                e.Handled = true;
-                return;
-            }
-
-            if (e.KeyChar == (char)Keys.Return)
-            {
-                txtJurisd.Focus();
-                e.Handled = true;
-            }
+                (e.KeyChar >= 91 && e.KeyChar <= 96) || (e.KeyChar >= 123 && e.KeyChar <= 247) || (e.KeyChar >= 249 && e.KeyChar <= 255))
+            { MessageBox.Show("Solo Letras y Números", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation); e.Handled = true; return; }
+            if (e.KeyChar == (char)Keys.Return) { txtJurisd.Focus(); e.Handled = true; }
         }
 
         private void txtJurisd_KeyPress(object sender, KeyPressEventArgs e)
         {
             if ((e.KeyChar >= 33 && e.KeyChar <= 64) || (e.KeyChar >= 91 && e.KeyChar <= 96) || (e.KeyChar >= 123 && e.KeyChar <= 255))
-            {
-                MessageBox.Show("Solo Letras", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                e.Handled = true;
-                return;
-            }
-
-            if (e.KeyChar == (char)Keys.Return)
-            {
-                txtDireccion.Focus();
-                e.Handled = true;
-            }
+            { MessageBox.Show("Solo Letras", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation); e.Handled = true; return; }
+            if (e.KeyChar == (char)Keys.Return) { txtDireccion.Focus(); e.Handled = true; }
         }
 
         private void txtDireccion_KeyPress(object sender, KeyPressEventArgs e)
         {
             if ((e.KeyChar >= 33 && e.KeyChar <= 43) || (e.KeyChar >= 58 && e.KeyChar <= 64) ||
                 (e.KeyChar >= 91 && e.KeyChar <= 96) || (e.KeyChar >= 123 && e.KeyChar <= 255))
-            {
-                MessageBox.Show("Solo Letras", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                e.Handled = true;
-                return;
-            }
-
-            if (e.KeyChar == (char)Keys.Return)
-            {
-                txtLiquidador.Focus();
-                e.Handled = true;
-            }
+            { MessageBox.Show("Solo Letras", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation); e.Handled = true; return; }
+            if (e.KeyChar == (char)Keys.Return) { txtLiquidador.Focus(); e.Handled = true; }
         }
 
         private void txtLiquidador_KeyPress(object sender, KeyPressEventArgs e)
         {
             if ((e.KeyChar >= 32 && e.KeyChar <= 64) || (e.KeyChar >= 91 && e.KeyChar <= 96) || (e.KeyChar >= 123 && e.KeyChar <= 255))
-            {
-                MessageBox.Show("Solo Letras", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                e.Handled = true;
-                return;
-            }
-
-            if (e.KeyChar == (char)Keys.Return)
-            {
-                e.Handled = true;
-            }
+            { MessageBox.Show("Solo Letras", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation); e.Handled = true; return; }
+            if (e.KeyChar == (char)Keys.Return) { e.Handled = true; }
         }
     }
 }

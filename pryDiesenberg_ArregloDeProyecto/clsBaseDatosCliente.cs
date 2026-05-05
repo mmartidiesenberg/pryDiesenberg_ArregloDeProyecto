@@ -21,140 +21,173 @@ namespace pryDiesenberg_ArregloDeProyecto
         OleDbDataAdapter adaptadorBD;
         DataSet objDataSet = new DataSet();
 
-        string cadenaConexion = @"Provider = Microsoft.ACE.OLEDB.12.0;" + " Data Source = ..\\..\\Resources\\EL_CLUB.accdb";
-
         public string estadoConexion = "";
         public string datosTabla;
+
+        private string ObtenerRutaBD()
+        {
+            return Path.Combine(Application.StartupPath, "EL_CLUB.accdb");
+        }
+
         public void ConectarBD()
         {
             try
             {
-                string rutaBase = Path.Combine(
-                    Application.StartupPath,
-                    "EL_CLUB.accdb"
-                );
-
-                MessageBox.Show("Ruta: " + rutaBase); // ← línea temporal para ver la ruta
-
+                string ruta = ObtenerRutaBD();
                 conexionBD = new OleDbConnection(
-                    $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={rutaBase};"
+                    $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={ruta};"
                 );
                 conexionBD.Open();
-
-                MessageBox.Show("Conexión exitosa!"); // ← para confirmar que abrió
+                estadoConexion = "Conectado";
             }
             catch (Exception ex)
             {
-                MessageBox.Show("ERROR: " + ex.Message);
+                estadoConexion = "Error de conexión";
+                MessageBox.Show("ERROR al conectar: " + ex.Message);
+            }
+        }
+
+        private void CerrarConexion()
+        {
+            lectorBD?.Close();
+            if (conexionBD != null && conexionBD.State == ConnectionState.Open)
+            {
+                conexionBD.Close();
+                conexionBD.Dispose();
             }
         }
 
         public void TraerDatos(DataGridView grilla)
         {
-            ConectarBD();
-            //instancia un objeto en la memoria
-            comandoBD = new OleDbCommand();
-
-            //conecta el comando con la conexion
-            comandoBD.Connection = conexionBD;
-            comandoBD.CommandType = System.Data.CommandType.TableDirect;
-            comandoBD.CommandText = "CLIENTES";
-
-            lectorBD = comandoBD.ExecuteReader();
-            grilla.Columns.Add("CODIGO_SOCIO", "CODIGO_SOCIO");
-            grilla.Columns.Add("Nombre", "Nombre");
-            grilla.Columns.Add("Apellido", "Apellido");
-            grilla.Columns.Add("Edad","Edad");
-            grilla.Columns.Add("Sexo", "Sexo");
-            grilla.Columns.Add("Ingreso", "Ingreso");
-            grilla.Columns.Add("Puntaje", "Puntaje");
-            grilla.Columns.Add("Atividad", "Actividad");
-                      
-            if (lectorBD.HasRows)
+            try
             {
+                ConectarBD();
+                comandoBD = new OleDbCommand
+                {
+                    Connection = conexionBD,
+                    CommandType = CommandType.TableDirect,
+                    CommandText = "CLIENTES"
+                };
+
+                lectorBD = comandoBD.ExecuteReader();
+
+                grilla.Columns.Add("CODIGO_SOCIO", "CODIGO_SOCIO");
+                grilla.Columns.Add("Nombre", "Nombre");
+                grilla.Columns.Add("Apellido", "Apellido");
+                grilla.Columns.Add("Edad", "Edad");
+                grilla.Columns.Add("Sexo", "Sexo");
+                grilla.Columns.Add("Ingreso", "Ingreso");
+                grilla.Columns.Add("Puntaje", "Puntaje");
+                grilla.Columns.Add("Actividad", "Actividad");
+
                 while (lectorBD.Read())
                 {
                     string actividad = (bool)lectorBD["Actividad"] ? "Activo" : "Inactivo";
-
-                    datosTabla += "-" + lectorBD[1];
-                    grilla.Rows.Add(lectorBD[0],lectorBD[1],lectorBD[2],lectorBD[4], lectorBD[5], lectorBD[6], lectorBD[7], actividad);
+                    grilla.Rows.Add(
+                        lectorBD[0], lectorBD[1], lectorBD[2],
+                        lectorBD[4], lectorBD[5], lectorBD[6],
+                        lectorBD[7], actividad);
                 }
             }
-            lectorBD.Close();
-            conexionBD.Close();
-            conexionBD.Dispose();
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al traer datos: " + ex.Message);
+            }
+            finally
+            {
+                CerrarConexion();
+            }
         }
 
+        // BUSCAR — ahora abre y cierra conexión correctamente
         public void BuscarPorID(int codigo)
         {
-            comandoBD = new OleDbCommand();
-
-            comandoBD.Connection = conexionBD;
-            comandoBD.CommandType = System.Data.CommandType.TableDirect;  //q tipo de operacion quierp hacer y que me traiga TOD la tabla con el tabledirect
-            comandoBD.CommandText = "CLIENTES"; //Que tabla traigo
-
-            lectorBD = comandoBD.ExecuteReader(); //abre la tabla y muestra por renglon
-
-            if (lectorBD.HasRows) //SI TIENE FILAS
+            try
             {
-                bool Find = false; // bandera
-                while (lectorBD.Read()) //mientras pueda leer, mostrar (leer)
+                ConectarBD();
+
+                comandoBD = new OleDbCommand
+                {
+                    Connection = conexionBD,
+                    CommandType = CommandType.TableDirect,
+                    CommandText = "CLIENTES"
+                };
+
+                lectorBD = comandoBD.ExecuteReader();
+
+                bool encontrado = false;
+
+                while (lectorBD.Read())
                 {
                     if (int.Parse(lectorBD[0].ToString()) == codigo)
                     {
-
-                        //datosTabla += "-" + lectorBD[0]; //dato d la comlumna 0
-                        MessageBox.Show("Cliente Existente " + lectorBD[0], "Consulta", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        Find = true; // bandera
+                        MessageBox.Show(
+                            $"Cliente encontrado:\nCódigo: {lectorBD[0]}\n" +
+                            $"Nombre: {lectorBD[1]} {lectorBD[2]}",
+                            "Cliente Existente",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        encontrado = true;
                         break;
                     }
+                }
 
-                }
-                if (Find == false)
+                if (!encontrado)
                 {
-                    MessageBox.Show("NO Existente " + lectorBD[0], "Consulta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    MessageBox.Show($"No existe un cliente con código {codigo}.",
+                        "No encontrado", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al buscar: " + ex.Message);
+            }
+            finally
+            {
+                CerrarConexion();
             }
         }
 
         public void actividadCliente(int codigo)
         {
-            ConectarBD();
-
-            comandoBD = new OleDbCommand();
-            comandoBD.Connection = conexionBD;
-            comandoBD.CommandType = System.Data.CommandType.TableDirect;
-            comandoBD.CommandText = "CLIENTES";
-
-            adaptadorBD = new OleDbDataAdapter(comandoBD);
-            adaptadorBD.Fill(objDataSet,"CLIENTES");
-
-            DataTable dt = objDataSet.Tables["CLIENTES"];
-
-            foreach (DataRow dr in dt.Rows)
+            try
             {
-                
-                if ((int)dr["CODIGO_SOCIO"] == codigo)
+                ConectarBD();
+                objDataSet = new DataSet();
+
+                comandoBD = new OleDbCommand
                 {
-                    if ((bool)dr["ACTIVIDAD"] == false)
-                    {                       
-                        dr.BeginEdit();
-                        dr["ACTIVIDAD"] = true;
-                        dr.EndEdit();                     
-                        break;
-                    }
-                    else if ((bool)dr["ACTIVIDAD"] == true)
+                    Connection = conexionBD,
+                    CommandType = CommandType.TableDirect,
+                    CommandText = "CLIENTES"
+                };
+
+                adaptadorBD = new OleDbDataAdapter(comandoBD);
+                adaptadorBD.Fill(objDataSet, "CLIENTES");
+
+                DataTable dt = objDataSet.Tables["CLIENTES"];
+
+                foreach (DataRow dr in dt.Rows)
+                {
+                    if ((int)dr["CODIGO_SOCIO"] == codigo)
                     {
                         dr.BeginEdit();
-                        dr["ACTIVIDAD"] = false;
+                        dr["ACTIVIDAD"] = !(bool)dr["ACTIVIDAD"]; // toggle
                         dr.EndEdit();
                         break;
                     }
-                }                          
+                }
+
+                OleDbCommandBuilder cb = new OleDbCommandBuilder(adaptadorBD);
+                adaptadorBD.Update(objDataSet, "CLIENTES");
             }
-            OleDbCommandBuilder cb = new OleDbCommandBuilder(adaptadorBD);
-           
-            adaptadorBD.Update(objDataSet, "CLIENTES");                     
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al modificar actividad: " + ex.Message);
+            }
+            finally
+            {
+                CerrarConexion();
+            }
         }
     }
 }
