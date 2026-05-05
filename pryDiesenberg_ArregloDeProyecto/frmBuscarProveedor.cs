@@ -376,7 +376,7 @@ namespace pryDiesenberg_ArregloDeProyecto
             if ((e.KeyChar >= 32 && e.KeyChar <= 64) || (e.KeyChar >= 91 && e.KeyChar <= 96) || (e.KeyChar >= 123 && e.KeyChar <= 255))
             { MessageBox.Show("Solo Letras", "Alerta", MessageBoxButtons.OK, MessageBoxIcon.Exclamation); e.Handled = true; return; }
             if (e.KeyChar == (char)Keys.Return) { e.Handled = true; }
-        }
+        }       
     }
 }
 
