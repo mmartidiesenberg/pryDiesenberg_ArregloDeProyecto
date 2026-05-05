@@ -126,6 +126,8 @@ namespace pryDiesenberg_ArregloDeProyecto
                 btnLimpiar.Visible = true;
 
                 limpiar();
+
+                btnMostrarProveedor.Visible = false;  // ← ÚLTIMA LÍNEA DEL TRY
             }
             catch (Exception ex)
             {
